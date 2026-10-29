@@ -1,1 +1,24 @@
+Trajectory ID: ae3f3e52-dab4-4179-aa72-a8ee72417470
+Error: HTTP 503 Service Unavailable
+Sherlog: 
+TraceID: 0xb2443d814d612b47
+Headers: {"Alt-Svc":["h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"],"Content-Length":["453"],"Content-Type":["text/event-stream"],"Date":["Thu, 29 Oct 2026 17:48:39 GMT"],"Server":["ESF"],"Server-Timing":["gfet4t7; dur=536"],"Vary":["Origin","X-Origin","Referer"],"X-Cloudaicompanion-Trace-Id":["b2443d814d612b47"],"X-Content-Type-Options":["nosniff"],"X-Frame-Options":["SAMEORIGIN"],"X-Xss-Protection":["0"]}
 
+{
+  "error": {
+    "code": 503,
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "domain": "cloudcode-pa.googleapis.com",
+        "metadata": {
+          "error_number": "2010",
+          "model": "gpt-oss-120b-medium"
+        },
+        "reason": "MODEL_CAPACITY_EXHAUSTED"
+      }
+    ],
+    "message": "No capacity available for model gpt-oss-120b-medium on the server",
+    "status": "UNAVAILABLE"
+  }
+}
