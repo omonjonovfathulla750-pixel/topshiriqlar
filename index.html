@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Topshiriqlar va Qarorlar Monitoringi Dashboard</title>
+    <title>Departament E-Ijro & DOC Monitoringi — v4.0 Pro</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SheetJS (Haqiqiy XLSX Excel kutubxonasi) -->
+    <!-- SheetJS (Excel .xlsx) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,207 +23,149 @@
         ::-webkit-scrollbar-track { background: #0b1a17; }
         ::-webkit-scrollbar-thumb { background: #1b3d35; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #2ec4b6; }
+        .photo-3x4 { width: 64px; height: 85px; object-fit: cover; border-radius: 0.75rem; }
     </style>
 </head>
 <body class="min-h-screen bg-[#071311] text-[#f0fdf8] flex flex-col antialiased selection:bg-[#2ec4b6]/30 selection:text-white">
 
     <!-- Navbar -->
-    <header class="border-b border-[#18332d] bg-[#0b1a17]/90 backdrop-blur sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header class="border-b border-[#18332d] bg-[#0b1a17]/95 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
             <div class="flex items-center space-x-3">
                 <div class="bg-[#102420] border border-[#2ec4b6]/30 text-[#2ec4b6] p-2.5 rounded-xl shadow-lg shadow-[#2ec4b6]/10">
-                    <i class="fa-solid fa-tree text-lg"></i>
+                    <i class="fa-solid fa-building-shield text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-base sm:text-lg font-bold text-[#f0fdf8] tracking-tight flex items-center gap-2">
-                        Topshiriqlar Monitoringi
-                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#2ec4b6]/10 text-[#2ec4b6] border border-[#2ec4b6]/20">SPA v2.3</span>
+                    <h1 class="text-sm sm:text-base font-bold text-[#f0fdf8] tracking-tight flex items-center gap-2">
+                        IIV / Departament DOC
+                        <span id="roleBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#2ec4b6]/15 text-[#2ec4b6] border border-[#2ec4b6]/30">👑 Rahbar Rejimi</span>
                     </h1>
-                    <p class="text-xs text-[#8fa99e]">Nordic Forest & Deep Sage interfeysi</p>
+                    <p class="text-[11px] text-[#8fa99e] hidden sm:block">Elektron Hujjat va Ijro Intizomi Tizimi</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-2 sm:space-x-3">
-                <!-- Haqiqiy XLSX Excel Export -->
-                <button onclick="exportToExcel()" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#10b981] border border-[#1e3d36] transition flex items-center gap-1.5" title="To'liq formatlangan haqiqiy Excel (.xlsx) jadvalini yuklash">
-                    <i class="fa-solid fa-file-excel text-sm"></i> <span class="hidden md:inline">Excel</span> (.xlsx)
+
+            <!-- Role Switcher & Actions -->
+            <div class="flex items-center flex-wrap gap-1.5 sm:gap-2">
+                <!-- Mode Switch -->
+                <div class="bg-[#0b1a17] border border-[#1e3d36] rounded-xl p-0.5 flex items-center text-xs">
+                    <button id="btnRoleBoss" onclick="switchRole('BOSS')" class="px-3 py-1 rounded-lg font-bold bg-[#2ec4b6] text-[#071311] transition">Rahbar</button>
+                    <button id="btnRoleEmp" onclick="switchRole('EMP')" class="px-3 py-1 rounded-lg font-medium text-[#8fa99e] hover:text-white transition">Xodim</button>
+                </div>
+
+                <!-- Excel Export -->
+                <button onclick="exportToExcel()" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#10b981] border border-[#1e3d36] transition flex items-center gap-1.5" title="Excel (.xlsx)">
+                    <i class="fa-solid fa-file-excel"></i> <span class="hidden md:inline">Excel</span>
                 </button>
-                <!-- Backup actions -->
-                <button onclick="exportJSON()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#8fa99e] hover:text-[#f0fdf8] border border-[#1e3d36] transition flex items-center gap-1.5" title="JSON nusxa olish">
-                    <i class="fa-solid fa-download text-[#2ec4b6]"></i> <span class="hidden lg:inline">Zaxira</span>
+                <!-- JSON Backup -->
+                <button onclick="exportJSON()" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#8fa99e] hover:text-[#f0fdf8] border border-[#1e3d36] transition" title="Zaxira">
+                    <i class="fa-solid fa-download text-[#2ec4b6]"></i>
                 </button>
-                <label class="cursor-pointer px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#8fa99e] hover:text-[#f0fdf8] border border-[#1e3d36] transition flex items-center gap-1.5" title="Zaxirani tiklash">
+                <label class="cursor-pointer px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#8fa99e] border border-[#1e3d36] transition" title="Tiklash">
                     <i class="fa-solid fa-upload text-[#e09f3e]"></i>
                     <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
                 </label>
-                <!-- Add Modals -->
-                <button onclick="openModal('decreeModal')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#8fa99e] hover:text-[#f0fdf8] border border-[#1e3d36] transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-plus text-[#2ec4b6]"></i> <span class="hidden sm:inline">Yangi</span> Qaror
+                <!-- Settings -->
+                <button onclick="openSettingsModal()" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#e09f3e] border border-[#1e3d36] transition">
+                    <i class="fa-solid fa-gear"></i>
                 </button>
-                <button onclick="openNewTaskModal()" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#2ec4b6] hover:bg-[#28b0a3] text-[#071311] shadow-lg shadow-[#2ec4b6]/20 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Yangi</span> Topshiriq
-                </button>
+
+                <!-- Boss-only Action Buttons -->
+                <div id="bossActionButtons" class="flex items-center gap-1.5">
+                    <button onclick="openEmployeeModal()" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#f0fdf8] border border-[#1e3d36] transition">
+                        <i class="fa-solid fa-user-plus text-[#2ec4b6]"></i> <span class="hidden sm:inline">Xodim</span>
+                    </button>
+                    <button onclick="openModal('decreeModal')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#f0fdf8] border border-[#1e3d36] transition">
+                        <i class="fa-solid fa-folder-plus text-[#e09f3e]"></i> <span class="hidden sm:inline">Qaror</span>
+                    </button>
+                    <button onclick="openNewTaskModal()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#2ec4b6] hover:bg-[#28b0a3] text-[#071311] shadow-lg shadow-[#2ec4b6]/20 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> <span>Topshiriq</span>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
-        
-        <!-- Top KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-[#2ec4b6]/40 transition">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[11px] font-bold text-[#8fa99e] uppercase tracking-wider">Jami Topshiriqlar</p>
-                        <h3 id="kpi-total" class="text-3xl font-extrabold text-[#f0fdf8] mt-1">0</h3>
-                    </div>
-                    <div class="w-11 h-11 rounded-xl bg-[#2ec4b6]/10 border border-[#2ec4b6]/20 text-[#2ec4b6] flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-layer-group"></i>
-                    </div>
-                </div>
-                <div class="mt-3 text-xs text-[#8fa99e]">Jami ro'yxatga olingan</div>
-            </div>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
 
-            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-[#2ec4b6]/40 transition">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[11px] font-bold text-[#8fa99e] uppercase tracking-wider">Respublika</p>
-                        <h3 id="kpi-respublika" class="text-3xl font-extrabold text-[#2ec4b6] mt-1">0</h3>
-                    </div>
-                    <div class="w-11 h-11 rounded-xl bg-[#2ec4b6]/10 border border-[#2ec4b6]/20 text-[#2ec4b6] flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-landmark"></i>
-                    </div>
+        <!-- EMPLOYEE VIEW NOTICE / SELECTOR -->
+        <div id="employeeSelectBar" class="hidden bg-[#112420] border border-[#2ec4b6]/40 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#2ec4b6]/20 text-[#2ec4b6] flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-id-badge"></i>
                 </div>
-                <div class="mt-3 text-xs text-[#8fa99e]">Hukumat darajasida</div>
+                <div>
+                    <h4 class="text-sm font-bold text-[#f0fdf8]">Xodim Shaxsiy Kabineti</h4>
+                    <p class="text-xs text-[#8fa99e]">O'z ismingizni tanlang va o'zingizga biriktirilgan topshiriqlar bo'yicha hisobot yuboring</p>
+                </div>
             </div>
-
-            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-[#e09f3e]/40 transition">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[11px] font-bold text-[#8fa99e] uppercase tracking-wider">Departament</p>
-                        <h3 id="kpi-dept" class="text-3xl font-extrabold text-[#e09f3e] mt-1">0</h3>
-                    </div>
-                    <div class="w-11 h-11 rounded-xl bg-[#e09f3e]/10 border border-[#e09f3e]/20 text-[#e09f3e] flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-building-user"></i>
-                    </div>
-                </div>
-                <div class="mt-3 text-xs text-[#8fa99e]">Ichki topshiriqlar</div>
+            <div class="flex items-center gap-2">
+                <select id="activeEmpSelector" onchange="changeActiveEmployee(this.value)" class="bg-[#0b1a17] border border-[#1e3d36] text-[#2ec4b6] font-bold text-xs rounded-xl px-4 py-2.5 outline-none focus:border-[#2ec4b6]">
+                    <!-- Dynamically filled -->
+                </select>
             </div>
+        </div>
 
-            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-[#e76f51]/40 transition">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[11px] font-bold text-[#e76f51] uppercase tracking-wider">Muddati O'tgan</p>
-                        <h3 id="kpi-overdue" class="text-3xl font-extrabold text-[#e76f51] mt-1">0</h3>
-                    </div>
-                    <div class="w-11 h-11 rounded-xl bg-[#e76f51]/10 border border-[#e76f51]/20 text-[#e76f51] flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                    </div>
-                </div>
-                <div class="mt-3 text-xs text-[#8fa99e]">Ijrosi kechikkan</div>
+        <!-- Top KPI Cards (Boss Mode) -->
+        <div id="bossKpiContainer" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-4 shadow-xl">
+                <p class="text-[10px] font-bold text-[#8fa99e] uppercase">Jami Topshiriq</p>
+                <h3 id="kpi-total" class="text-2xl font-extrabold text-[#f0fdf8] mt-1">0</h3>
             </div>
-
-            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-[#2ec4b6]/40 transition">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[11px] font-bold text-[#8fa99e] uppercase tracking-wider">Samaradorlik</p>
-                        <h3 id="kpi-rate" class="text-3xl font-extrabold text-[#2ec4b6] mt-1">0%</h3>
-                    </div>
-                    <div class="w-11 h-11 rounded-xl bg-[#2ec4b6]/10 border border-[#2ec4b6]/20 text-[#2ec4b6] flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-gauge-high"></i>
-                    </div>
-                </div>
-                <div class="w-full bg-[#1b3d35] h-1.5 rounded-full mt-3 overflow-hidden">
-                    <div id="kpi-progress" class="bg-[#2ec4b6] h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
+            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-4 shadow-xl">
+                <p class="text-[10px] font-bold text-[#2ec4b6] uppercase">Nazoratdan Yechildi</p>
+                <h3 id="kpi-done" class="text-2xl font-extrabold text-[#2ec4b6] mt-1">0</h3>
+            </div>
+            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-4 shadow-xl">
+                <p class="text-[10px] font-bold text-[#e09f3e] uppercase">Hisobot Kutilmoqda</p>
+                <h3 id="kpi-pending-report" class="text-2xl font-extrabold text-[#e09f3e] mt-1">0</h3>
+            </div>
+            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-4 shadow-xl">
+                <p class="text-[10px] font-bold text-[#38bdf8] uppercase">3 Kun Qolgan</p>
+                <h3 id="kpi-soon" class="text-2xl font-extrabold text-[#38bdf8] mt-1">0</h3>
+            </div>
+            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-4 shadow-xl">
+                <p class="text-[10px] font-bold text-[#e76f51] uppercase">Muddati O'tgan</p>
+                <h3 id="kpi-overdue" class="text-2xl font-extrabold text-[#e76f51] mt-1">0</h3>
+            </div>
+            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-4 shadow-xl">
+                <p class="text-[10px] font-bold text-[#8fa99e] uppercase">Samaradorlik</p>
+                <h3 id="kpi-rate" class="text-2xl font-extrabold text-[#2ec4b6] mt-1">0%</h3>
             </div>
         </div>
 
         <!-- Filter & Search Bar -->
-        <div class="bg-[#112420] border border-[#1e3d36] p-5 rounded-2xl shadow-xl flex flex-wrap gap-4 items-center justify-between">
-            <div class="flex flex-wrap items-center gap-3 flex-1">
-                <div class="w-full sm:w-56 relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-[#8fa99e] text-xs"></i>
-                    <input type="text" id="filter-search" placeholder="Topshiriq yoki xodim qidiruvi..." class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] text-xs rounded-xl pl-8 pr-3 py-2 outline-none focus:border-[#2ec4b6] transition">
+        <div class="bg-[#112420] border border-[#1e3d36] p-4 rounded-2xl shadow-xl flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex flex-wrap items-center gap-2.5 flex-1">
+                <div class="w-full sm:w-52 relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#8fa99e] text-xs"></i>
+                    <input type="text" id="filter-search" placeholder="Topshiriq mazmuni..." class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] text-xs rounded-xl pl-8 pr-3 py-2 outline-none focus:border-[#2ec4b6]">
                 </div>
 
-                <div>
-                    <select id="filter-decree" class="bg-[#0b1a17] border border-[#1e3d36] text-[#8fa99e] text-xs rounded-xl px-3 py-2 outline-none focus:border-[#2ec4b6] transition">
-                        <option value="ALL">Barcha Qarorlar</option>
-                    </select>
-                </div>
+                <select id="filter-employee" class="bg-[#0b1a17] border border-[#1e3d36] text-[#8fa99e] text-xs rounded-xl px-3 py-2 outline-none">
+                    <option value="ALL">Barcha Xodimlar</option>
+                </select>
 
-                <div>
-                    <select id="filter-source" class="bg-[#0b1a17] border border-[#1e3d36] text-[#8fa99e] text-xs rounded-xl px-3 py-2 outline-none focus:border-[#2ec4b6] transition">
-                        <option value="ALL">Barcha Manbalar</option>
-                        <option value="Respublika">Respublika</option>
-                        <option value="Departament">Departament</option>
-                    </select>
-                </div>
-
-                <div>
-                    <select id="filter-status" class="bg-[#0b1a17] border border-[#1e3d36] text-[#8fa99e] text-xs rounded-xl px-3 py-2 outline-none focus:border-[#2ec4b6] transition">
-                        <option value="ALL">Barcha Holatlar</option>
-                        <option value="Vaqtida bajarilgan">Vaqtida bajarilgan</option>
-                        <option value="Kechikib bajarilgan">Kechikib bajarilgan</option>
-                        <option value="Ijroda">Ijroda</option>
-                        <option value="Muddati o'tgan">Muddati o'tgan</option>
-                    </select>
-                </div>
+                <select id="filter-status" class="bg-[#0b1a17] border border-[#1e3d36] text-[#8fa99e] text-xs rounded-xl px-3 py-2 outline-none">
+                    <option value="ALL">Barcha Holatlar</option>
+                    <option value="Nazoratdan yechildi">Nazoratdan yechildi (Bajarildi)</option>
+                    <option value="Hisobot yuborildi">Hisobot yuborildi (Tasdiq kutilmoqda)</option>
+                    <option value="Ijroda">Ijroda</option>
+                    <option value="Muddati o'tgan">Muddati o'tgan</option>
+                </select>
             </div>
 
-            <div class="flex items-center gap-2">
-                <button id="btn-reset" class="px-3.5 py-2 bg-[#0b1a17] hover:bg-[#16332d] text-[#8fa99e] hover:text-[#f0fdf8] border border-[#1e3d36] text-xs font-semibold rounded-xl transition flex items-center gap-1.5" title="Filtrlarni tozalash">
-                    <i class="fa-solid fa-arrows-rotate"></i> Filtrni tozalash
-                </button>
-                <button onclick="clearAllData()" class="px-3 py-2 bg-[#e76f51]/10 hover:bg-[#e76f51]/20 text-[#e76f51] border border-[#e76f51]/30 text-xs font-semibold rounded-xl transition flex items-center gap-1.5" title="Barcha ma'lumotlarni o'chirish">
-                    <i class="fa-solid fa-trash-can"></i> Bazani tozalash
-                </button>
-            </div>
+            <button onclick="resetFilters()" class="px-3 py-2 bg-[#0b1a17] hover:bg-[#16332d] text-[#8fa99e] text-xs font-semibold rounded-xl transition">
+                <i class="fa-solid fa-arrows-rotate"></i> Tozalash
+            </button>
         </div>
 
-        <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-6 shadow-xl flex flex-col items-center">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-[#8fa99e] self-start mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-pie text-[#2ec4b6]"></i> Ijro Holati Taqsimoti
-                </h4>
-                <div class="relative w-full max-w-[220px] h-[220px]">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-
-            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-6 shadow-xl lg:col-span-2 flex flex-col">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-[#8fa99e] mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-column text-[#2ec4b6]"></i> Qarorlar Kesimida Bajarilish Tahlili
-                </h4>
-                <div class="relative w-full flex-1 min-h-[220px]">
-                    <canvas id="decreeBarChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Registered Decrees Cards (Multi-Source Hub) -->
-        <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-6 shadow-xl space-y-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h4 class="text-sm font-bold text-[#f0fdf8] flex items-center gap-2">
-                        <i class="fa-solid fa-book-bookmark text-[#e09f3e]"></i> Ro'yxatdagi Qarorlar va Rasmiy Manbalar
-                    </h4>
-                    <p class="text-xs text-[#8fa99e]">Qaror kartalari orqali rasmiy portallardan hujjatlarni ochish</p>
-                </div>
-            </div>
-            <div id="decrees-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Dynamically populated -->
-            </div>
-        </div>
-
-        <!-- Tasks Data Table -->
+        <!-- Tasks Data Table (DOC Reestr) -->
         <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl shadow-xl overflow-hidden">
             <div class="p-5 border-b border-[#18332d] flex items-center justify-between">
                 <div>
                     <h4 class="text-sm font-bold text-[#f0fdf8] flex items-center gap-2">
-                        <i class="fa-solid fa-table-list text-[#2ec4b6]"></i> Topshiriqlar Reestri
+                        <i class="fa-solid fa-file-lines text-[#2ec4b6]"></i> Elektron Topshiriqlar Reestri
                     </h4>
                     <p class="text-xs text-[#8fa99e]" id="table-info">Yuklanmoqda...</p>
                 </div>
@@ -232,16 +174,15 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
-                        <tr class="bg-[#0b1a17]/80 text-[#8fa99e] font-bold uppercase tracking-wider border-b border-[#18332d]">
-                            <th class="py-3 px-4">№</th>
-                            <th class="py-3 px-4">Topshiriq mazmuni</th>
-                            <th class="py-3 px-4">Qaror</th>
-                            <th class="py-3 px-4">Manba</th>
-                            <th class="py-3 px-4">Mas'ul xodim</th>
-                            <th class="py-3 px-4">Reja muddati</th>
-                            <th class="py-3 px-4">Bajarilgan</th>
-                            <th class="py-3 px-4">Holati</th>
-                            <th class="py-3 px-4 text-center">Amallar</th>
+                        <tr class="bg-[#0b1a17]/90 text-[#8fa99e] font-bold uppercase tracking-wider border-b border-[#18332d]">
+                            <th class="py-3 px-3">№</th>
+                            <th class="py-3 px-3">Topshiriq Mazmuni</th>
+                            <th class="py-3 px-3">Qaror / Asos</th>
+                            <th class="py-3 px-3">Mas'ul Xodim</th>
+                            <th class="py-3 px-3">Muddat</th>
+                            <th class="py-3 px-3">Xodim Hisoboti</th>
+                            <th class="py-3 px-3">Holati</th>
+                            <th class="py-3 px-3 text-center">Boshqaruv / Amallar</th>
                         </tr>
                     </thead>
                     <tbody id="tasks-table-body" class="divide-y divide-[#18332d] text-[#e8f1ee]">
@@ -251,112 +192,171 @@
             </div>
         </div>
 
+        <!-- Employees KPI Cards Section -->
+        <div id="employeesSection" class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-bold text-[#f0fdf8] flex items-center gap-2">
+                        <i class="fa-solid fa-users-rectangle text-[#2ec4b6]"></i> Xodimlar Intizomi va 3x4 Kartochkalari
+                    </h4>
+                    <p class="text-xs text-[#8fa99e]">Bo'lim xodimlarining yuklamasi va shaxsiy samaradorligi</p>
+                </div>
+                <button onclick="openEmployeeModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#0b1a17] text-[#2ec4b6] border border-[#2ec4b6]/30">
+                    <i class="fa-solid fa-user-plus"></i> Xodim qo'shish
+                </button>
+            </div>
+            <div id="employees-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically filled -->
+            </div>
+        </div>
+
     </main>
 
-    <!-- Modal: Add / Edit Task -->
+    <!-- MODAL 1: Employee Add/Edit -->
+    <div id="employeeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-[#18332d] pb-3">
+                <h3 class="font-bold text-[#f0fdf8] text-sm">Xodim Qo'shish (3x4 Foto)</h3>
+                <button onclick="closeModal('employeeModal')" class="text-[#8fa99e] hover:text-white">&times;</button>
+            </div>
+            <form id="employeeForm" class="space-y-3">
+                <input type="hidden" id="editEmpId">
+                <div class="flex items-center gap-4">
+                    <div class="w-[64px] h-[85px] rounded-xl bg-[#0b1a17] border border-[#1e3d36] flex items-center justify-center overflow-hidden shrink-0">
+                        <img id="empPhotoPreview" src="" class="w-full h-full object-cover hidden">
+                        <i id="empPhotoIcon" class="fa-solid fa-user-tie text-xl text-[#8fa99e]"></i>
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <label class="block text-xs font-semibold text-[#8fa99e]">3x4 Rasm tanlash:</label>
+                        <input type="file" id="empPhotoInput" accept="image/*" class="text-xs text-[#8fa99e] file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#2ec4b6]/10 file:text-[#2ec4b6] cursor-pointer w-full">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">F.I.Sh va Lavozimi:</label>
+                    <input type="text" id="empName" required placeholder="Aliyev Sardor (Bosh mutaxassis)" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Telefon raqami / Telegram ID:</label>
+                    <input type="text" id="empPhone" placeholder="+998901234567" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('employeeModal')" class="px-3.5 py-1.5 bg-[#0b1a17] text-[#8fa99e] rounded-xl text-xs">Bekor qilish</button>
+                    <button type="submit" class="px-4 py-1.5 bg-[#2ec4b6] text-[#071311] rounded-xl text-xs font-bold">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Add Task (Boss) -->
     <div id="taskModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between border-b border-[#18332d] pb-3">
-                <h3 id="taskModalTitle" class="font-bold text-[#f0fdf8] text-sm">Yangi Topshiriq Qo'shish</h3>
+                <h3 class="font-bold text-[#f0fdf8] text-sm">Yangi Topshiriq Kiritish (DOC)</h3>
                 <button onclick="closeModal('taskModal')" class="text-[#8fa99e] hover:text-white">&times;</button>
             </div>
             <form id="taskForm" class="space-y-3">
                 <input type="hidden" id="editTaskId">
                 <div>
-                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Topshiriq mazmuni:</label>
-                    <input type="text" id="taskTitle" required class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Tegishli Qaror:</label>
-                    <select id="taskDecree" required class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]"></select>
+                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Topshiriq mazmuni / Rezolyutsiya:</label>
+                    <textarea id="taskTitle" rows="3" required placeholder="Vazifani batafsil yozing..." class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Manba:</label>
-                        <select id="taskSource" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none">
-                            <option value="Respublika">Respublika</option>
-                            <option value="Departament">Departament</option>
+                        <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Qaror / Asos:</label>
+                        <select id="taskDecree" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none">
+                            <option value="ICHKI">Ichki / Operativ (Qarorsiz)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Mas'ul xodim:</label>
-                        <input type="text" id="taskResp" required placeholder="Masalan: Sardor" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
+                        <select id="taskEmpId" required class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]"></select>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Reja muddati:</label>
-                        <input type="date" id="taskDeadline" required class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Bajarilgan sana (ixtiyoriy):</label>
-                        <input type="date" id="taskCompleted" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
-                    </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Reja muddati (Tugash sanasi):</label>
+                    <input type="date" id="taskDeadline" required class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
                 </div>
-                <div class="pt-3 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('taskModal')" class="px-3.5 py-1.5 bg-[#0b1a17] hover:bg-[#16332d] text-[#8fa99e] rounded-xl text-xs">Bekor qilish</button>
-                    <button type="submit" class="px-4 py-1.5 bg-[#2ec4b6] hover:bg-[#28b0a3] text-[#071311] rounded-xl text-xs font-bold">Saqlash</button>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('taskModal')" class="px-3.5 py-1.5 bg-[#0b1a17] text-[#8fa99e] rounded-xl text-xs">Bekor qilish</button>
+                    <button type="submit" class="px-4 py-1.5 bg-[#2ec4b6] text-[#071311] rounded-xl text-xs font-bold">Topshiriqni Yuborish</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Add Decree with Multi-Source search -->
+    <!-- MODAL 3: Submit Report (Employee) -->
+    <div id="reportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-[#18332d] pb-3">
+                <h3 class="font-bold text-[#f0fdf8] text-sm">Bajarilgan Ish Bo'yicha Hisobot Yuborish</h3>
+                <button onclick="closeModal('reportModal')" class="text-[#8fa99e] hover:text-white">&times;</button>
+            </div>
+            <form id="reportForm" class="space-y-3">
+                <input type="hidden" id="reportTaskId">
+                <div>
+                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Bajarilgan ish mazmuni / Hisobot matni:</label>
+                    <textarea id="reportText" rows="4" required placeholder="Bajarilgan ishlar bo'yicha qisqacha hisobot va natijani kiriting..." class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Hisobot hujjati / Fayl havolasi (ixtiyoriy):</label>
+                    <input type="url" id="reportFileUrl" placeholder="https://cloud.uz/file..." class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('reportModal')" class="px-3.5 py-1.5 bg-[#0b1a17] text-[#8fa99e] rounded-xl text-xs">Bekor qilish</button>
+                    <button type="submit" class="px-4 py-1.5 bg-[#2ec4b6] text-[#071311] rounded-xl text-xs font-bold">Rahbarga yuborish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Add Decree -->
     <div id="decreeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between border-b border-[#18332d] pb-3">
-                <h3 class="font-bold text-[#f0fdf8] text-sm">Yangi Qaror Qo'shish</h3>
+                <h3 class="font-bold text-[#f0fdf8] text-sm">Qaror Qo'shish</h3>
                 <button onclick="closeModal('decreeModal')" class="text-[#8fa99e] hover:text-white">&times;</button>
             </div>
             <form id="decreeForm" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Qaror raqami / kodi (Masalan: PQ-1, PF-20, VM-45):</label>
+                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Qaror raqami (Masalan: PQ-1, PF-20):</label>
                     <input type="text" id="decreeCode" required placeholder="PQ-1" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
-                    <!-- Multi-Source Search Buttons -->
-                    <div class="mt-2 flex flex-wrap gap-1.5 items-center">
-                        <span class="text-[10px] text-[#8fa99e]">Tezkor qidiruv:</span>
-                        <button type="button" onclick="searchOnSite('lex')" class="px-2 py-0.5 rounded bg-[#102420] border border-[#2ec4b6]/30 text-[#2ec4b6] text-[10px] hover:bg-[#16332d]">Lex.uz</button>
-                        <button type="button" onclick="searchOnSite('gov')" class="px-2 py-0.5 rounded bg-[#102420] border border-[#e09f3e]/30 text-[#e09f3e] text-[10px] hover:bg-[#16332d]">Gov.uz</button>
-                        <button type="button" onclick="searchOnSite('norma')" class="px-2 py-0.5 rounded bg-[#102420] border border-[#6b9080]/30 text-[#8fa99e] text-[10px] hover:bg-[#16332d]">Norma.uz</button>
-                        <button type="button" onclick="searchOnSite('google')" class="px-2 py-0.5 rounded bg-[#102420] border border-[#8fa99e]/30 text-white text-[10px] hover:bg-[#16332d]">Google</button>
-                    </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Qarorning qisqa mazmuni / to'liq nomi:</label>
-                    <input type="text" id="decreeName" required placeholder="Yer munosabatlarini tartibga solish to'g'risida" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
+                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Qaror nomi:</label>
+                    <input type="text" id="decreeName" required placeholder="Toliq nomini kiriting" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Maxsus havola (ixtiyoriy, bo'sh qolsa Google avto-qidiruv bog'lanadi):</label>
-                    <input type="url" id="decreeUrl" placeholder="https://..." class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
-                </div>
-                <div class="pt-3 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('decreeModal')" class="px-3.5 py-1.5 bg-[#0b1a17] hover:bg-[#16332d] text-[#8fa99e] rounded-xl text-xs">Bekor qilish</button>
-                    <button type="submit" class="px-4 py-1.5 bg-[#2ec4b6] hover:bg-[#28b0a3] text-[#071311] rounded-xl text-xs font-bold">Qarorni saqlash</button>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('decreeModal')" class="px-3.5 py-1.5 bg-[#0b1a17] text-[#8fa99e] rounded-xl text-xs">Bekor qilish</button>
+                    <button type="submit" class="px-4 py-1.5 bg-[#2ec4b6] text-[#071311] rounded-xl text-xs font-bold">Saqlash</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Application Logic -->
     <script>
-        const STORAGE_KEY = "NORDIC_MONITORING_DATA_V3";
+        const STORAGE_KEY = "NORDIC_DOC_SYSTEM_V4";
 
         let appData = {
+            currentRole: "BOSS", // "BOSS" or "EMP"
+            activeEmpId: null,
+            employees: [],
             decrees: [],
             tasks: []
         };
 
-        let statusChart = null;
-        let barChart = null;
+        let currentPhotoBase64 = "";
 
         function loadFromStorage() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 try {
-                    appData = JSON.parse(saved);
-                } catch(e) {
-                    console.error("Storage error:", e);
-                }
+                    const parsed = JSON.parse(saved);
+                    appData.employees = parsed.employees || [];
+                    appData.decrees = parsed.decrees || [];
+                    appData.tasks = parsed.tasks || [];
+                    appData.currentRole = parsed.currentRole || "BOSS";
+                    appData.activeEmpId = parsed.activeEmpId || (appData.employees[0] ? appData.employees[0].id : null);
+                } catch(e) {}
             }
         }
 
@@ -364,486 +364,453 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         }
 
-        function calculateStatus(deadline, completed) {
-            const today = new Date().toISOString().slice(0, 10);
-            if (completed && completed.trim() !== "") {
-                return completed <= deadline ? "Vaqtida bajarilgan" : "Kechikib bajarilgan";
-            } else {
-                return today > deadline ? "Muddati o'tgan" : "Ijroda";
-            }
+        function getTodayStr() {
+            return new Date().toISOString().slice(0, 10);
         }
+
+        function getDaysRemaining(deadline) {
+            const today = new Date(getTodayStr());
+            const due = new Date(deadline);
+            return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+        }
+
+        function calculateStatus(task) {
+            const today = getTodayStr();
+            if (task.status === "Nazoratdan yechildi" || task.status === "Hisobot yuborildi") {
+                return task.status;
+            }
+            return today > task.deadline ? "Muddati o'tgan" : "Ijroda";
+        }
+
+        // Role Switcher
+        function switchRole(role) {
+            appData.currentRole = role;
+            saveToStorage();
+            updateRoleUI();
+            renderApp();
+        }
+
+        function updateRoleUI() {
+            const isBoss = appData.currentRole === "BOSS";
+            document.getElementById('roleBadge').textContent = isBoss ? "👑 Rahbar Rejimi" : "👤 Xodim Kabineti";
+            document.getElementById('btnRoleBoss').className = isBoss ? "px-3 py-1 rounded-lg font-bold bg-[#2ec4b6] text-[#071311]" : "px-3 py-1 rounded-lg font-medium text-[#8fa99e]";
+            document.getElementById('btnRoleEmp').className = !isBoss ? "px-3 py-1 rounded-lg font-bold bg-[#2ec4b6] text-[#071311]" : "px-3 py-1 rounded-lg font-medium text-[#8fa99e]";
+            
+            document.getElementById('bossActionButtons').style.display = isBoss ? "flex" : "none";
+            document.getElementById('bossKpiContainer').style.display = isBoss ? "grid" : "none";
+            document.getElementById('employeesSection').style.display = isBoss ? "block" : "none";
+            document.getElementById('employeeSelectBar').style.display = isBoss ? "none" : "flex";
+        }
+
+        // Photo Resizer
+        document.getElementById('empPhotoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 120; canvas.height = 160;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 120, 160);
+                    currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    const p = document.getElementById('empPhotoPreview');
+                    p.src = currentPhotoBase64; p.classList.remove('hidden');
+                    document.getElementById('empPhotoIcon').classList.add('hidden');
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
+        function openEmployeeModal() {
+            document.getElementById('employeeForm').reset();
+            currentPhotoBase64 = "";
+            document.getElementById('empPhotoPreview').classList.add('hidden');
+            document.getElementById('empPhotoIcon').classList.remove('hidden');
+            openModal('employeeModal');
+        }
+
         function openNewTaskModal() {
-            if (appData.decrees.length === 0) {
-                alert("Topshiriq qo'shishdan oldin kamida bitta qaror qo'shing!");
-                openModal('decreeModal');
+            if (appData.employees.length === 0) {
+                alert("Avval xodim qo'shing!");
+                openEmployeeModal();
                 return;
             }
-            document.getElementById('taskModalTitle').textContent = "Yangi Topshiriq Qo'shish";
-            document.getElementById('editTaskId').value = '';
             document.getElementById('taskForm').reset();
+            populateDecreeSelect();
+            populateEmpSelect();
             openModal('taskModal');
         }
 
-        function openEditTaskModal(id) {
-            const task = appData.tasks.find(t => t.id === id);
-            if (!task) return;
-
-            document.getElementById('taskModalTitle').textContent = "Topshiriqni Tahrirlash";
-            document.getElementById('editTaskId').value = task.id;
-            document.getElementById('taskTitle').value = task.title;
-            document.getElementById('taskDecree').value = task.decree;
-            document.getElementById('taskSource').value = task.source;
-            document.getElementById('taskResp').value = task.responsible;
-            document.getElementById('taskDeadline').value = task.deadline;
-            document.getElementById('taskCompleted').value = task.completed || '';
-            openModal('taskModal');
+        function openReportModal(taskId) {
+            document.getElementById('reportForm').reset();
+            document.getElementById('reportTaskId').value = taskId;
+            openModal('reportModal');
         }
 
-        function searchOnSite(engine) {
-            const code = document.getElementById('decreeCode').value.trim();
-            if (!code) {
-                alert("Iltimos, avval qaror raqamini yozing (masalan: PQ-1)");
+        function populateDecreeSelect() {
+            const sel = document.getElementById('taskDecree');
+            sel.innerHTML = '<option value="ICHKI">Ichki / Operativ (Qarorsiz)</option>';
+            appData.decrees.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.code;
+                opt.textContent = `${d.code} - ${d.name}`;
+                sel.appendChild(opt);
+            });
+        }
+
+        function populateEmpSelect() {
+            const sel = document.getElementById('taskEmpId');
+            sel.innerHTML = '';
+            appData.employees.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = e.name;
+                sel.appendChild(opt);
+            });
+        }
+
+        function changeActiveEmployee(empId) {
+            appData.activeEmpId = empId;
+            saveToStorage();
+            renderApp();
+        }
+
+        // Render Application
+        function renderApp() {
+            updateRoleUI();
+            
+            // Recalculate status
+            appData.tasks.forEach(t => {
+                t.status = calculateStatus(t);
+            });
+
+            renderEmployeeSelectorBar();
+            renderEmployeesSection();
+            renderTable();
+            if (appData.currentRole === "BOSS") updateKPIs();
+        }
+
+        function renderEmployeeSelectorBar() {
+            const sel = document.getElementById('activeEmpSelector');
+            sel.innerHTML = '';
+            if (appData.employees.length === 0) {
+                sel.innerHTML = '<option>Xodimlar yo\'q</option>';
                 return;
             }
-            let url = "";
-            if (engine === 'lex') url = `https://lex.uz/search/all?search_text=${encodeURIComponent(code)}`;
-            else if (engine === 'gov') url = `https://gov.uz/uz/search?q=${encodeURIComponent(code)}`;
-            else if (engine === 'norma') url = `https://www.norma.uz/search?q=${encodeURIComponent(code)}`;
-            else if (engine === 'google') url = `https://www.google.com/search?q=${encodeURIComponent(code + " qarori lex uz")}`;
-            window.open(url, '_blank');
+            appData.employees.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = e.name;
+                if (e.id == appData.activeEmpId) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            if (!appData.activeEmpId && appData.employees[0]) {
+                appData.activeEmpId = appData.employees[0].id;
+            }
         }
 
-        function renderApp() {
-            const decreeFilter = document.getElementById('filter-decree');
-            const currentDecreeVal = decreeFilter.value;
-            const taskDecreeSelect = document.getElementById('taskDecree');
-            const decreesContainer = document.getElementById('decrees-container');
+        function renderEmployeesSection() {
+            const container = document.getElementById('employees-container');
+            const filterEmp = document.getElementById('filter-employee');
+            container.innerHTML = '';
+            filterEmp.innerHTML = '<option value="ALL">Barcha Xodimlar</option>';
 
-            decreeFilter.innerHTML = '<option value="ALL">Barcha Qarorlar</option>';
-            taskDecreeSelect.innerHTML = '';
-            decreesContainer.innerHTML = '';
+            appData.employees.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.id; opt.textContent = e.name;
+                filterEmp.appendChild(opt);
 
-            if (appData.decrees.length === 0) {
-                decreesContainer.innerHTML = `
-                    <div class="col-span-full text-center py-6 text-[#8fa99e] text-xs">
-                        Hozircha hech qanday qaror kiritilmagan. Yuqoridagi "Yangi Qaror" tugmasi orqali qo'shishingiz mumkin.
+                const empTasks = appData.tasks.filter(t => t.empId == e.id);
+                const total = empTasks.length;
+                const done = empTasks.filter(t => t.status === "Nazoratdan yechildi").length;
+                const pending = empTasks.filter(t => t.status === "Hisobot yuborildi").length;
+                const overdue = empTasks.filter(t => t.status === "Muddati o'tgan").length;
+                const rate = total > 0 ? Math.round((done / total) * 100) : 100;
+
+                const photoHtml = e.photo 
+                    ? `<img src="${e.photo}" class="photo-3x4 border border-[#2ec4b6]/40 shrink-0">`
+                    : `<div class="photo-3x4 bg-[#0b1a17] border border-[#1e3d36] flex items-center justify-center text-[#8fa99e] shrink-0"><i class="fa-solid fa-user-tie text-xl"></i></div>`;
+
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-2xl bg-[#0b1a17] border border-[#1e3d36] flex gap-3 items-center justify-between";
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        ${photoHtml}
+                        <div class="flex-1 min-w-0 space-y-1">
+                            <h5 class="font-bold text-[#f0fdf8] text-xs truncate">${e.name}</h5>
+                            <p class="text-[11px] text-[#8fa99e]"><i class="fa-solid fa-phone text-[#2ec4b6]"></i> ${e.phone || '-'}</p>
+                            <div class="grid grid-cols-3 gap-1 text-center pt-1">
+                                <div class="bg-[#112420] rounded p-1"><div class="text-[9px] text-[#8fa99e]">Jami</div><div class="text-xs font-bold text-white">${total}</div></div>
+                                <div class="bg-[#112420] rounded p-1"><div class="text-[9px] text-[#2ec4b6]">Bajarildi</div><div class="text-xs font-bold text-[#2ec4b6]">${done}</div></div>
+                                <div class="bg-[#112420] rounded p-1"><div class="text-[9px] text-[#e09f3e]">Kutilmoqda</div><div class="text-xs font-bold text-[#e09f3e]">${pending}</div></div>
+                            </div>
+                        </div>
                     </div>
                 `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateKPIs() {
+            const tasks = appData.tasks;
+            const total = tasks.length;
+            const done = tasks.filter(t => t.status === "Nazoratdan yechildi").length;
+            const pendingReport = tasks.filter(t => t.status === "Hisobot yuborildi").length;
+            const overdue = tasks.filter(t => t.status === "Muddati o'tgan").length;
+            const soon = tasks.filter(t => t.status === "Ijroda" && getDaysRemaining(t.deadline) >= 0 && getDaysRemaining(t.deadline) <= 3).length;
+            const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+
+            document.getElementById('kpi-total').textContent = total;
+            document.getElementById('kpi-done').textContent = done;
+            document.getElementById('kpi-pending-report').textContent = pendingReport;
+            document.getElementById('kpi-soon').textContent = soon;
+            document.getElementById('kpi-overdue').textContent = overdue;
+            document.getElementById('kpi-rate').textContent = rate + '%';
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tasks-table-body');
+            tbody.innerHTML = '';
+
+            let data = appData.tasks;
+            // If Employee mode, filter only active employee tasks
+            if (appData.currentRole === "EMP") {
+                data = data.filter(t => t.empId == appData.activeEmpId);
             } else {
-                appData.decrees.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.code;
-                    opt.textContent = `${d.code} - ${d.name}`;
-                    decreeFilter.appendChild(opt);
+                // Boss filters
+                const empVal = document.getElementById('filter-employee').value;
+                const statusVal = document.getElementById('filter-status').value;
+                const searchVal = document.getElementById('filter-search').value.toLowerCase().trim();
 
-                    const opt2 = document.createElement('option');
-                    opt2.value = d.code;
-                    opt2.textContent = `${d.code} - ${d.name}`;
-                    taskDecreeSelect.appendChild(opt2);
-
-                    const cardUrl = d.url && d.url.trim() !== "" ? d.url : `https://www.google.com/search?q=${encodeURIComponent(d.code + " qarori lex uz")}`;
-
-                    const card = document.createElement('div');
-                    card.className = "p-4 rounded-xl bg-[#0b1a17] border border-[#1e3d36] flex flex-col justify-between hover:border-[#2ec4b6]/50 transition";
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-[#2ec4b6]/10 text-[#2ec4b6] border border-[#2ec4b6]/20">${d.code}</span>
-                                <button onclick="deleteDecree('${d.code}')" class="text-[#8fa99e] hover:text-[#e76f51] transition" title="O'chirish">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </div>
-                            <h5 class="font-semibold text-[#f0fdf8] text-xs leading-snug">${d.name}</h5>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-[#18332d] flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <a href="${cardUrl}" target="_blank" class="text-xs font-medium text-[#2ec4b6] hover:underline flex items-center gap-1" title="Rasmiy manbani ochish">
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Manba
-                                </a>
-                                <a href="https://lex.uz/search/all?search_text=${encodeURIComponent(d.code)}" target="_blank" class="text-[10px] text-[#8fa99e] hover:text-white px-1.5 py-0.5 bg-[#102420] rounded border border-[#1e3d36]">Lex</a>
-                            </div>
-                            <button onclick="filterByDecree('${d.code}')" class="text-xs text-[#8fa99e] hover:text-white underline">Topshiriqlar</button>
-                        </div>
-                    `;
-                    decreesContainer.appendChild(card);
+                data = data.filter(t => {
+                    const matchEmp = (empVal === 'ALL') || (t.empId == empVal);
+                    const matchStatus = (statusVal === 'ALL') || (t.status === statusVal);
+                    const matchSearch = !searchVal || t.title.toLowerCase().includes(searchVal);
+                    return matchEmp && matchStatus && matchSearch;
                 });
             }
 
-            if (currentDecreeVal) decreeFilter.value = currentDecreeVal;
-            applyFilters();
-        }
-
-        function filterByDecree(code) {
-            document.getElementById('filter-decree').value = code;
-            applyFilters();
-            window.scrollTo({ top: 450, behavior: 'smooth' });
-        }
-
-        function applyFilters() {
-            const decVal = document.getElementById('filter-decree').value;
-            const srcVal = document.getElementById('filter-source').value;
-            const statusVal = document.getElementById('filter-status').value;
-            const searchVal = document.getElementById('filter-search').value.toLowerCase().trim();
-
-            const filtered = appData.tasks.filter(t => {
-                const matchDec = (decVal === 'ALL') || (t.decree.toLowerCase() === decVal.toLowerCase());
-                const matchSrc = (srcVal === 'ALL') || (t.source.toLowerCase() === srcVal.toLowerCase());
-                const matchStatus = (statusVal === 'ALL') || (t.status === statusVal);
-                const matchSearch = !searchVal || 
-                                    t.title.toLowerCase().includes(searchVal) || 
-                                    t.responsible.toLowerCase().includes(searchVal) || 
-                                    t.decree.toLowerCase().includes(searchVal);
-                return matchDec && matchSrc && matchStatus && matchSearch;
-            });
-
-            updateKPIs(filtered);
-            updateTable(filtered);
-            updateCharts(filtered);
-        }
-
-        function updateKPIs(data) {
-            const total = data.length;
-            const resp = data.filter(d => d.source.toLowerCase() === 'respublika').length;
-            const dept = data.filter(d => d.source.toLowerCase() === 'departament').length;
-            const overdue = data.filter(d => d.status === "Muddati o'tgan").length;
-            const onTime = data.filter(d => d.status === "Vaqtida bajarilgan").length;
-            const late = data.filter(d => d.status === "Kechikib bajarilgan").length;
-            const completed = onTime + late;
-
-            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-            document.getElementById('kpi-total').textContent = total;
-            document.getElementById('kpi-respublika').textContent = resp;
-            document.getElementById('kpi-dept').textContent = dept;
-            document.getElementById('kpi-overdue').textContent = overdue;
-            document.getElementById('kpi-rate').textContent = rate + '%';
-            document.getElementById('kpi-progress').style.width = rate + '%';
-        }
-
-        function updateTable(data) {
-            const tbody = document.getElementById('tasks-table-body');
-            tbody.innerHTML = '';
-            document.getElementById('table-info').textContent = `Jami ${data.length} ta topshiriq saralandi`;
+            document.getElementById('table-info').textContent = `Jami ${data.length} ta topshiriq ko'rsatilmoqda`;
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-[#8fa99e]">Topshiriqlar mavjud emas</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-[#8fa99e]">Topshiriqlar mavjud emas</td></tr>`;
                 return;
             }
 
-            data.forEach((t) => {
-                let badgeClass = "bg-[#6b9080]/15 text-[#8fa99e] border border-[#6b9080]/30";
-                if (t.status === "Vaqtida bajarilgan") {
-                    badgeClass = "bg-[#2ec4b6]/15 text-[#2ec4b6] border border-[#2ec4b6]/30";
-                } else if (t.status === "Kechikib bajarilgan") {
-                    badgeClass = "bg-[#e09f3e]/15 text-[#e09f3e] border border-[#e09f3e]/30";
+            data.forEach((t, idx) => {
+                const emp = appData.employees.find(e => e.id == t.empId);
+                const empName = emp ? emp.name : "Noma'lum";
+                const daysLeft = getDaysRemaining(t.deadline);
+
+                let statusBadge = "bg-[#6b9080]/15 text-[#8fa99e] border-[#6b9080]/30";
+                if (t.status === "Nazoratdan yechildi") statusBadge = "bg-[#2ec4b6]/15 text-[#2ec4b6] border-[#2ec4b6]/30";
+                else if (t.status === "Hisobot yuborildi") statusBadge = "bg-[#e09f3e]/15 text-[#e09f3e] border-[#e09f3e]/30";
+                else if (t.status === "Muddati o'tgan") statusBadge = "bg-[#e76f51]/15 text-[#e76f51] border-[#e76f51]/30";
+
+                let deadlineHtml = `<div class="font-mono text-[#f0fdf8]">${t.deadline}</div>`;
+                if (t.status === "Ijroda" && daysLeft <= 3 && daysLeft >= 0) {
+                    deadlineHtml += `<span class="text-[10px] text-[#e09f3e] font-bold"><i class="fa-solid fa-bell"></i> ${daysLeft} kun qoldi</span>`;
                 } else if (t.status === "Muddati o'tgan") {
-                    badgeClass = "bg-[#e76f51]/15 text-[#e76f51] border border-[#e76f51]/30";
+                    deadlineHtml += `<span class="text-[10px] text-[#e76f51] font-bold">Muddati o'tdi</span>`;
+                }
+
+                // Report Section
+                let reportHtml = `<span class="text-[#8fa99e] italic text-[11px]">Hisobot yuborilmagan</span>`;
+                if (t.reportText) {
+                    reportHtml = `
+                        <div class="bg-[#0b1a17] p-2 rounded-lg border border-[#1e3d36] space-y-1">
+                            <p class="text-[11px] text-[#f0fdf8]"><b>Hisobot:</b> ${t.reportText}</p>
+                            ${t.reportFileUrl ? `<a href="${t.reportFileUrl}" target="_blank" class="text-[10px] text-[#2ec4b6] underline"><i class="fa-solid fa-paperclip"></i> Faylni ochish</a>` : ''}
+                        </div>
+                    `;
+                }
+
+                // Action Buttons based on role & status
+                let actionButtons = '';
+                if (appData.currentRole === "EMP") {
+                    if (t.status !== "Nazoratdan yechildi") {
+                        actionButtons = `<button onclick="openReportModal(${t.id})" class="px-3 py-1.5 bg-[#2ec4b6] hover:bg-[#28b0a3] text-[#071311] font-bold rounded-xl text-xs">Hisobot yuborish</button>`;
+                    } else {
+                        actionButtons = `<span class="text-[#2ec4b6] font-bold text-xs"><i class="fa-solid fa-check"></i> Tasdiqlangan</span>`;
+                    }
+                } else {
+                    // Boss actions
+                    if (t.status === "Hisobot yuborildi") {
+                        actionButtons = `
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="approveTask(${t.id})" class="px-2.5 py-1 bg-[#2ec4b6] hover:bg-[#28b0a3] text-[#071311] font-bold rounded-lg text-[11px]" title="Nazoratdan yechish">Tasdiqlash</button>
+                                <button onclick="rejectTask(${t.id})" class="px-2 py-1 bg-[#e76f51]/20 text-[#e76f51] rounded-lg text-[11px]" title="Qaytarish">Qaytarish</button>
+                            </div>
+                        `;
+                    } else if (t.status === "Nazoratdan yechildi") {
+                        actionButtons = `<span class="text-[#2ec4b6] font-semibold">Bajarilgan</span>`;
+                    } else {
+                        actionButtons = `<button onclick="deleteTask(${t.id})" class="text-[#8fa99e] hover:text-[#e76f51] p-1"><i class="fa-solid fa-trash-can"></i></button>`;
+                    }
                 }
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-[#16332d]/40 transition";
                 tr.innerHTML = `
-                    <td class="py-3 px-4 font-mono text-[#8fa99e]">${t.taskNumber || t.id}</td>
-                    <td class="py-3 px-4 font-semibold text-[#f0fdf8]">${t.title}</td>
-                    <td class="py-3 px-4">
-                        <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-[#0b1a17] text-[#2ec4b6] border border-[#1e3d36]">${t.decree}</span>
-                    </td>
-                    <td class="py-3 px-4 text-[#8fa99e]">${t.source}</td>
-                    <td class="py-3 px-4 font-medium text-[#f0fdf8]">${t.responsible}</td>
-                    <td class="py-3 px-4 text-[#8fa99e] font-mono">${t.deadline}</td>
-                    <td class="py-3 px-4 text-[#8fa99e] font-mono">${t.completed || '-'}</td>
-                    <td class="py-3 px-4">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${badgeClass}">
-                            ${t.status}
-                        </span>
-                    </td>
-                    <td class="py-3 px-4 text-center space-x-1 sm:space-x-2">
-                        <button onclick="toggleDone(${t.id})" class="text-[#2ec4b6] hover:text-[#38b000] p-1" title="Bajarildi / Bajarilmadi">
-                            <i class="fa-solid fa-circle-check"></i>
-                        </button>
-                        <button onclick="openEditTaskModal(${t.id})" class="text-[#e09f3e] hover:text-white p-1" title="Tahrirlash">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="deleteTask(${t.id})" class="text-[#8fa99e] hover:text-[#e76f51] p-1" title="O'chirish">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
+                    <td class="py-3 px-3 font-mono text-[#8fa99e]">${idx + 1}</td>
+                    <td class="py-3 px-3 font-semibold text-[#f0fdf8] max-w-xs">${t.title}</td>
+                    <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#0b1a17] text-[#2ec4b6] border border-[#1e3d36]">${t.decree || 'ICHKI'}</span></td>
+                    <td class="py-3 px-3 font-medium text-[#f0fdf8]">${empName}</td>
+                    <td class="py-3 px-3">${deadlineHtml}</td>
+                    <td class="py-3 px-3 max-w-xs">${reportHtml}</td>
+                    <td class="py-3 px-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusBadge}">${t.status}</span></td>
+                    <td class="py-3 px-3 text-center">${actionButtons}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function updateCharts(data) {
-            const onTime = data.filter(d => d.status === "Vaqtida bajarilgan").length;
-            const late = data.filter(d => d.status === "Kechikib bajarilgan").length;
-            const pending = data.filter(d => d.status === "Ijroda").length;
-            const overdue = data.filter(d => d.status === "Muddati o'tgan").length;
-
-            const ctx1 = document.getElementById('statusChart').getContext('2d');
-            if (statusChart) statusChart.destroy();
-            statusChart = new Chart(ctx1, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Vaqtida', 'Kechikib', 'Ijroda', "Muddati o'tgan"],
-                    datasets: [{
-                        data: [onTime, late, pending, overdue],
-                        backgroundColor: ['#2ec4b6', '#e09f3e', '#6b9080', '#e76f51'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { color: '#8fa99e', font: { size: 10 } } } },
-                    cutout: '72%'
-                }
+        // Submissions
+        document.getElementById('employeeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('empName').value.trim();
+            const phone = document.getElementById('empPhone').value.trim();
+            appData.employees.push({
+                id: 'EMP_' + Date.now(),
+                name, phone,
+                photo: currentPhotoBase64 || ""
             });
+            saveToStorage();
+            closeModal('employeeModal');
+            renderApp();
+        });
 
-            const decreeMap = {};
-            appData.decrees.forEach(d => {
-                decreeMap[d.code] = { done: 0, left: 0 };
+        document.getElementById('taskForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('taskTitle').value.trim();
+            const decree = document.getElementById('taskDecree').value;
+            const empId = document.getElementById('taskEmpId').value;
+            const deadline = document.getElementById('taskDeadline').value;
+
+            appData.tasks.unshift({
+                id: Date.now(),
+                title, decree, empId, deadline,
+                status: "Ijroda",
+                reportText: "",
+                reportFileUrl: ""
             });
+            saveToStorage();
+            closeModal('taskModal');
+            renderApp();
+        });
 
-            data.forEach(t => {
-                if (decreeMap[t.decree]) {
-                    if (t.status.includes('bajarilgan')) {
-                        decreeMap[t.decree].done++;
-                    } else {
-                        decreeMap[t.decree].left++;
-                    }
-                }
-            });
+        document.getElementById('reportForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const taskId = Number(document.getElementById('reportTaskId').value);
+            const text = document.getElementById('reportText').value.trim();
+            const fileUrl = document.getElementById('reportFileUrl').value.trim();
 
-            const labels = Object.keys(decreeMap);
-            const doneData = labels.map(l => decreeMap[l].done);
-            const leftData = labels.map(l => decreeMap[l].left);
+            const task = appData.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.reportText = text;
+                task.reportFileUrl = fileUrl;
+                task.status = "Hisobot yuborildi";
+                saveToStorage();
+                closeModal('reportModal');
+                renderApp();
+                alert("Hisobotingiz rahbarga yuborildi!");
+            }
+        });
 
-            const ctx2 = document.getElementById('decreeBarChart').getContext('2d');
-            if (barChart) barChart.destroy();
-            barChart = new Chart(ctx2, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Bajarildi', data: doneData, backgroundColor: '#2ec4b6', borderRadius: 4 },
-                        { label: 'Qoldi', data: leftData, backgroundColor: '#e76f51', borderRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: '#8fa99e' } },
-                        y: { beginAtZero: true, grid: { color: '#18332d' }, ticks: { color: '#8fa99e', stepSize: 2 } }
-                    },
-                    plugins: { legend: { position: 'top', labels: { color: '#8fa99e', font: { size: 10 } } } }
-                }
-            });
-        }
+        document.getElementById('decreeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const code = document.getElementById('decreeCode').value.trim();
+            const name = document.getElementById('decreeName').value.trim();
+            appData.decrees.push({ code, name });
+            saveToStorage();
+            closeModal('decreeModal');
+            renderApp();
+        });
 
-        function toggleDone(id) {
+        function approveTask(id) {
             const task = appData.tasks.find(t => t.id === id);
             if (task) {
-                const today = new Date().toISOString().slice(0, 10);
-                task.completed = (task.status.includes('bajarilgan')) ? "" : today;
-                task.status = calculateStatus(task.deadline, task.completed);
+                task.status = "Nazoratdan yechildi";
                 saveToStorage();
                 renderApp();
             }
         }
 
+        function rejectTask(id) {
+            const task = appData.tasks.find(t => t.id === id);
+            if (task) {
+                task.status = "Ijroda";
+                task.reportText = "";
+                saveToStorage();
+                renderApp();
+                alert("Topshiriq qayta ishlash uchun xodimga qaytarildi.");
+            }
+        }
+
         function deleteTask(id) {
-            if (confirm("Ushbu topshiriqni o'chirishga ishonchingiz komilmi?")) {
+            if (confirm("O'chirishni tasdiqlaysizmi?")) {
                 appData.tasks = appData.tasks.filter(t => t.id !== id);
                 saveToStorage();
                 renderApp();
             }
         }
 
-        function deleteDecree(code) {
-            const relatedTasks = appData.tasks.filter(t => t.decree.toLowerCase() === code.toLowerCase());
-            let msg = `"${code}" qarorini o'chirmoqchimisiz?`;
-            if (relatedTasks.length > 0) {
-                msg += `\nUshbu qarorga bog'langan ${relatedTasks.length} ta topshiriq ham birga o'chiriladi!`;
-            }
-            if (confirm(msg)) {
-                appData.decrees = appData.decrees.filter(d => d.code.toLowerCase() !== code.toLowerCase());
-                appData.tasks = appData.tasks.filter(t => t.decree.toLowerCase() !== code.toLowerCase());
-                saveToStorage();
-                renderApp();
-            }
-        }
-
-        function clearAllData() {
-            if (confirm("Diqqat! Barcha kiritilgan qarorlar va topshiriqlar butunlay o'chiriladi. Rozimisiz?")) {
-                appData = { decrees: [], tasks: [] };
-                saveToStorage();
-                renderApp();
-            }
-        }
-
-        // Haqiqiy Excel (.xlsx) formati — SheetJS kutubxonasi yordamida
-        function exportToExcel() {
-            if (appData.tasks.length === 0) {
-                alert("Eksport qilish uchun topshiriqlar mavjud emas!");
-                return;
-            }
-
-            // Jadval ma'lumotlarini qatorlar shaklida tayyorlash
-            const rows = [
-                ["№", "Topshiriq Mazmuni", "Qaror Kodi", "Manba", "Mas'ul Xodim", "Reja Muddati", "Bajarilgan Sana", "Holati"]
-            ];
-
-            appData.tasks.forEach((t, index) => {
-                rows.push([
-                    index + 1,
-                    t.title || '',
-                    t.decree || '',
-                    t.source || '',
-                    t.responsible || '',
-                    t.deadline || '',
-                    t.completed || '-',
-                    t.status || ''
-                ]);
-            });
-
-            // Yangi Excel ish varag'i (worksheet) yaratish
-            const worksheet = XLSX.utils.aoa_to_sheet(rows);
-
-            // Ustunlarning kengligini matn sig'adigan qilib avtomatik belgilash
-            worksheet['!cols'] = [
-                { wch: 6 },  // №
-                { wch: 45 }, // Mazmun
-                { wch: 14 }, // Qaror kodi
-                { wch: 16 }, // Manba
-                { wch: 20 }, // Mas'ul
-                { wch: 14 }, // Muddat
-                { wch: 16 }, // Bajarilgan
-                { wch: 22 }  // Holat
-            ];
-
-            // Kitobcha (workbook) yaratish va yuklab berish
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Topshiriqlar");
-
-            const fileName = `Topshiriqlar_Monitoringi_${new Date().toISOString().slice(0, 10)}.xlsx`;
-            XLSX.writeFile(workbook, fileName);
-        }
-
-        // Export JSON Backup
-        function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `monitoring_zaxira_${new Date().toISOString().slice(0, 10)}.json`);
-            dlAnchor.click();
-        }
-
-        // Import JSON Backup
-        function importJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (imported && Array.isArray(imported.decrees) && Array.isArray(imported.tasks)) {
-                        appData = imported;
-                        saveToStorage();
-                        renderApp();
-                        alert("Ma'lumotlar zaxiradan muvaffaqiyatli tiklandi!");
-                    } else {
-                        alert("Fayl formati noto'g'ri!");
-                    }
-                } catch(err) {
-                    alert("JSON faylni o'qishda xatolik yuz berdi!");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        // Form Submit: Add or Edit Task
-        document.getElementById('taskForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const editId = document.getElementById('editTaskId').value;
-            const deadline = document.getElementById('taskDeadline').value;
-            const completed = document.getElementById('taskCompleted').value;
-
-            if (editId) {
-                const task = appData.tasks.find(t => t.id == editId);
-                if (task) {
-                    task.title = document.getElementById('taskTitle').value;
-                    task.decree = document.getElementById('taskDecree').value;
-                    task.source = document.getElementById('taskSource').value;
-                    task.responsible = document.getElementById('taskResp').value;
-                    task.deadline = deadline;
-                    task.completed = completed || "";
-                    task.status = calculateStatus(deadline, completed);
-                }
-            } else {
-                const newTask = {
-                    id: Date.now(),
-                    taskNumber: appData.tasks.length + 1,
-                    title: document.getElementById('taskTitle').value,
-                    decree: document.getElementById('taskDecree').value,
-                    source: document.getElementById('taskSource').value,
-                    responsible: document.getElementById('taskResp').value,
-                    deadline: deadline,
-                    completed: completed || "",
-                    status: calculateStatus(deadline, completed)
-                };
-                appData.tasks.unshift(newTask);
-            }
-
-            saveToStorage();
-            closeModal('taskModal');
-            document.getElementById('taskForm').reset();
-            renderApp();
-        });
-
-        // Form Submit: Add Decree
-        document.getElementById('decreeForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const codeInput = document.getElementById('decreeCode').value.trim();
-            const nameInput = document.getElementById('decreeName').value.trim();
-            const urlInput = document.getElementById('decreeUrl').value.trim();
-
-            if (appData.decrees.some(d => d.code.toLowerCase() === codeInput.toLowerCase())) {
-                alert(`"${codeInput}" kodi bilan qaror allaqachon mavjud!`);
-                return;
-            }
-
-            const newDecree = {
-                code: codeInput,
-                name: nameInput,
-                url: urlInput || `https://www.google.com/search?q=${encodeURIComponent(codeInput + " qarori lex uz")}`
-            };
-
-            appData.decrees.push(newDecree);
-            saveToStorage();
-            closeModal('decreeModal');
-            document.getElementById('decreeForm').reset();
-            renderApp();
-        });
-
-        // Event Listeners
-        document.getElementById('filter-decree').addEventListener('change', applyFilters);
-        document.getElementById('filter-source').addEventListener('change', applyFilters);
-        document.getElementById('filter-status').addEventListener('change', applyFilters);
-        document.getElementById('filter-search').addEventListener('input', applyFilters);
-        document.getElementById('btn-reset').addEventListener('click', () => {
-            document.getElementById('filter-decree').value = 'ALL';
-            document.getElementById('filter-source').value = 'ALL';
+        function resetFilters() {
+            document.getElementById('filter-employee').value = 'ALL';
             document.getElementById('filter-status').value = 'ALL';
             document.getElementById('filter-search').value = '';
-            applyFilters();
-        });
+            renderApp();
+        }
 
-        // App Start
+        // Export Excel & JSON
+        function exportToExcel() {
+            if (appData.tasks.length === 0) { alert("Ma'lumot yo'q!"); return; }
+            const rows = [["№", "Topshiriq", "Qaror", "Mas'ul", "Muddat", "Xodim Hisoboti", "Holati"]];
+            appData.tasks.forEach((t, i) => {
+                const emp = appData.employees.find(e => e.id == t.empId);
+                rows.push([i+1, t.title, t.decree||'ICHKI', emp?emp.name:'', t.deadline, t.reportText||'-', t.status]);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "DOC_Reestr");
+            XLSX.writeFile(wb, `DOC_Monitoring_${getTodayStr()}.xlsx`);
+        }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr; a.download = `doc_zaxira_${getTodayStr()}.json`; a.click();
+        }
+
+        function importJSON(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const r = new FileReader();
+            r.onload = function(evt) {
+                try {
+                    const imp = JSON.parse(evt.target.result);
+                    if (imp && Array.isArray(imp.tasks)) {
+                        appData = imp;
+                        saveToStorage();
+                        renderApp();
+                        alert("Muvaffaqiyatli tiklandi!");
+                    }
+                } catch(err) { alert("Xato fayl!"); }
+            };
+            r.readAsText(file);
+        }
+
+        ['filter-employee', 'filter-status'].forEach(id => {
+            document.getElementById(id).addEventListener('change', renderTable);
+        });
+        document.getElementById('filter-search').addEventListener('input', renderTable);
+
         document.addEventListener('DOMContentLoaded', () => {
             loadFromStorage();
             renderApp();
