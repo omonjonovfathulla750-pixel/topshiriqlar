@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (Haqiqiy XLSX Excel kutubxonasi) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -35,15 +37,15 @@
                 <div>
                     <h1 class="text-base sm:text-lg font-bold text-[#f0fdf8] tracking-tight flex items-center gap-2">
                         Topshiriqlar Monitoringi
-                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#2ec4b6]/10 text-[#2ec4b6] border border-[#2ec4b6]/20">SPA v2.2</span>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#2ec4b6]/10 text-[#2ec4b6] border border-[#2ec4b6]/20">SPA v2.3</span>
                     </h1>
                     <p class="text-xs text-[#8fa99e]">Nordic Forest & Deep Sage interfeysi</p>
                 </div>
             </div>
             <div class="flex items-center space-x-2 sm:space-x-3">
-                <!-- Excel Export -->
-                <button onclick="exportToCSV()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#10b981] border border-[#1e3d36] transition flex items-center gap-1.5" title="Barcha topshiriqlarni Excelda yuklab olish">
-                    <i class="fa-solid fa-file-excel"></i> <span class="hidden md:inline">Excel</span> CSV
+                <!-- Haqiqiy XLSX Excel Export -->
+                <button onclick="exportToExcel()" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#10b981] border border-[#1e3d36] transition flex items-center gap-1.5" title="To'liq formatlangan haqiqiy Excel (.xlsx) jadvalini yuklash">
+                    <i class="fa-solid fa-file-excel text-sm"></i> <span class="hidden md:inline">Excel</span> (.xlsx)
                 </button>
                 <!-- Backup actions -->
                 <button onclick="exportJSON()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#112420] hover:bg-[#16332d] text-[#8fa99e] hover:text-[#f0fdf8] border border-[#1e3d36] transition flex items-center gap-1.5" title="JSON nusxa olish">
@@ -95,7 +97,7 @@
                 <div class="mt-3 text-xs text-[#8fa99e]">Hukumat darajasida</div>
             </div>
 
-            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-[#2ec4b6]/40 transition">
+            <div class="bg-[#112420] border border-[#1e3d36] rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-[#e09f3e]/40 transition">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-[11px] font-bold text-[#8fa99e] uppercase tracking-wider">Departament</p>
@@ -309,9 +311,7 @@
             <form id="decreeForm" class="space-y-3">
                 <div>
                     <label class="block text-xs font-semibold text-[#8fa99e] mb-1">Qaror raqami / kodi (Masalan: PQ-1, PF-20, VM-45):</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="decreeCode" required placeholder="PQ-1" class="flex-1 bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]" oninput="updateSearchButtons()">
-                    </div>
+                    <input type="text" id="decreeCode" required placeholder="PQ-1" class="w-full bg-[#0b1a17] border border-[#1e3d36] text-[#f0fdf8] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#2ec4b6]">
                     <!-- Multi-Source Search Buttons -->
                     <div class="mt-2 flex flex-wrap gap-1.5 items-center">
                         <span class="text-[10px] text-[#8fa99e]">Tezkor qidiruv:</span>
@@ -341,7 +341,6 @@
     <script>
         const STORAGE_KEY = "NORDIC_MONITORING_DATA_V3";
 
-        // Toza boshlang'ich holat (Demo butunlay yo'qotilgan)
         let appData = {
             decrees: [],
             tasks: []
@@ -417,8 +416,6 @@
             else if (engine === 'google') url = `https://www.google.com/search?q=${encodeURIComponent(code + " qarori lex uz")}`;
             window.open(url, '_blank');
         }
-
-        function updateSearchButtons() {}
 
         function renderApp() {
             const decreeFilter = document.getElementById('filter-decree');
@@ -689,37 +686,52 @@
             }
         }
 
-        // Export to Excel / CSV
-        function exportToCSV() {
+        // Haqiqiy Excel (.xlsx) formati — SheetJS kutubxonasi yordamida
+        function exportToExcel() {
             if (appData.tasks.length === 0) {
                 alert("Eksport qilish uchun topshiriqlar mavjud emas!");
                 return;
             }
-            let csvContent = "\uFEFF"; // UTF-8 BOM for Excel Cyrillic/Uzbek support
-            csvContent += "№,Topshiriq Mazmuni,Qaror Kodi,Manba,Mas'ul Xodim,Reja Muddati,Bajarilgan Sana,Holati\r\n";
+
+            // Jadval ma'lumotlarini qatorlar shaklida tayyorlash
+            const rows = [
+                ["№", "Topshiriq Mazmuni", "Qaror Kodi", "Manba", "Mas'ul Xodim", "Reja Muddati", "Bajarilgan Sana", "Holati"]
+            ];
 
             appData.tasks.forEach((t, index) => {
-                const row = [
+                rows.push([
                     index + 1,
-                    `"${(t.title || '').replace(/"/g, '""')}"`,
-                    `"${t.decree || ''}"`,
-                    `"${t.source || ''}"`,
-                    `"${t.responsible || ''}"`,
-                    `"${t.deadline || ''}"`,
-                    `"${t.completed || ''}"`,
-                    `"${t.status || ''}"`
-                ];
-                csvContent += row.join(",") + "\r\n";
+                    t.title || '',
+                    t.decree || '',
+                    t.source || '',
+                    t.responsible || '',
+                    t.deadline || '',
+                    t.completed || '-',
+                    t.status || ''
+                ]);
             });
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `topshiriqlar_monitoring_${new Date().toISOString().slice(0, 10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            // Yangi Excel ish varag'i (worksheet) yaratish
+            const worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+            // Ustunlarning kengligini matn sig'adigan qilib avtomatik belgilash
+            worksheet['!cols'] = [
+                { wch: 6 },  // №
+                { wch: 45 }, // Mazmun
+                { wch: 14 }, // Qaror kodi
+                { wch: 16 }, // Manba
+                { wch: 20 }, // Mas'ul
+                { wch: 14 }, // Muddat
+                { wch: 16 }, // Bajarilgan
+                { wch: 22 }  // Holat
+            ];
+
+            // Kitobcha (workbook) yaratish va yuklab berish
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Topshiriqlar");
+
+            const fileName = `Topshiriqlar_Monitoringi_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
         }
 
         // Export JSON Backup
